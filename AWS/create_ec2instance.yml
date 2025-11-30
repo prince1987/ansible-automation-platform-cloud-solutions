@@ -2,7 +2,7 @@
 - name: Creating an EC2 Instance with Creating a VPC and Subnet Id
   hosts: localhost
   vars:
-    myec2key: my-aws-keypair-name
+    ec2key: myec2key
   tasks:
     - name: Create a new VPC 
       amazon.aws.ec2_vpc_net:
@@ -41,7 +41,7 @@
     - name: Launch an EC2 Instance
       amazon.aws.ec2_instance:
         name: "Test-Ansible"
-        key_name: "{{ myec2key }}"
+        key_name: "{{ ec2key }}"
         vpc_subnet_id: "{{ subnet.subnet.id }}"
         instance_type: "{{ instance_type }}"
         security_group: "{{ security_group.group_id  }}"
