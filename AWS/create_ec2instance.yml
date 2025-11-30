@@ -1,35 +1,51 @@
 ---
-- name: Launch EC2 instance
+- name: Creating an EC2 Instance with Creating a VPC and Subnet Id
   hosts: localhost
-  connection: local
-  gather_facts: false
-  vars:
-    aws_region: us-east-2
-    instance_name: demo-ec2-from-aap
-    instance_type: t3.micro
-    image_id: ami-025ca978d4c1d9825   # replace with valid AMI in your region
-    key_name: Ec2-RDS-key              # must exist in AWS or create via module
-    subnet_id: subnet-045c7d6cdec2a1def       # optional: place in specific subnet
-    security_group: sg-0489cd7be9f0e22d8
-    tags:
-      Name: "{{ instance_name }}"
   tasks:
-    - name: Create EC2 instance
-      amazon.aws.ec2_instance:
-        name: "{{ instance_name }}"
-        region: "{{ aws_region }}"
-        instance_type: "{{ instance_type }}"
-        image_id: "{{ image_id }}"
-        key_name: "{{ key_name }}"
-        subnet_id: "{{ subnet_id }}"
-        vpc_security_group_ids:
-          - "{{ security_group }}"
-        count: 1
-        wait: true
-        assign_public_ip: true
-        tags: "{{ tags }}"
-      register: ec2
+    - name: Create a new VPC 
+      amazon.aws.ec2_vpc_net:
+        name: "Ansible-Test"
+        cidr_block: "{{ cidr_block }}"
+        region: "{{ region }}"
+      register: vpc
+  
+    - name: Create a new Subnet
+      amazon.aws.ec2_vpc_subnet:
+        cidr: "{{ cidr }}"
+        region: "{{ region }}"
+        vpc_id: "{{ vpc.vpc.id }}"
+      register: subnet
+    
+    - name: Create a Security Group  
+      amazon.aws.ec2_security_group:
+        name: "Ansible-Test-Security-Group"
+        description: "Ansible-Testing"
+        vpc_id: "{{ vpc.vpc.id }}"
+        region: "{{ region }}"
+        rules:
+          - proto: tcp
+            ports:
+            - 80
+            cidr_ip: 0.0.0.0/0
+            rule_desc: "allow all on port 80"
+      register: security_group
+    
+    - ansible.builtin.debug:
+        var: security_group.group_id
 
-    - name: Show instance details
-      debug:
-        var: ec2
+    - ansible.builtin.debug:
+        var: subnet.subnet.id
+    
+    - name: Launch an EC2 Instance
+      amazon.aws.ec2_instance:
+        name: "Test-Ansible"
+        key_name: "{{ Ec2-RDS-key }}"
+        vpc_subnet_id: "{{ subnet.subnet.id }}"
+        instance_type: "{{ instance_type }}"
+        security_group: "{{ security_group.group_id  }}"
+        count: 1
+        wait: yes
+        aws_region: "us-east-2"
+        network:
+          assign_public_ip: true
+        image_id: "{{ ami }}"
