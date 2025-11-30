@@ -7,7 +7,7 @@
     aws_region: us-east-2
     instance_name: demo-ec2-from-aap
     instance_type: t3.micro
-    image_id: ami-0abcdef1234567890   # replace with valid AMI in your region
+    image_id: ami-025ca978d4c1d9825   # replace with valid AMI in your region
     key_name: Ec2-RDS-key              # must exist in AWS or create via module
     subnet_id: subnet-045c7d6cdec2a1def       # optional: place in specific subnet
     security_group: sg-0489cd7be9f0e22d8
